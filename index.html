@@ -1,132 +1,203 @@
 <!DOCTYPE html>
-<<htmlhtml lang="en">
+<<htmlhtml lang="en" class="dark">
 <<headhead>
     <<metameta charset="UTF-8">
     <<metameta name="viewport" content="width=device-width, initial-scale=1.0">
-    <<titletitle>ChromaPalette AI | Professional Color Extractor</title>
+    <<titletitle>ChromaPalette Pro | Advanced Color Intelligence</title>
     <<scriptscript src="https://cdn.tailwindcss.com"></script>
     <<scriptscript src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <<scriptscript src="https://cdn.jsdelivr.net/npm/ml-kmeans@0.2.1/dist/ml-kmeans.min.js"></script>
-    <<linklink href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <<linklink href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <<stylestyle>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .color-card:hover .copy-btn { opacity: 1; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at top left, #1e293b, #0f172a, #020617);
+            color: #f1f5f9;
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+        .color-card:hover .action-overlay { opacity: 1; }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #fb7185 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
     </style>
 </head>
 <<bodybody class="antialiased">
-    <<divdiv id="app" class="min-h-screen py-12 px-4">
-        <<divdiv class="max-w-4xl mx-auto">
-            
-            <!-- Header -->
-            <<headerheader class="text-center mb-12">
-                <<hh1 class="text-4xl font-extrabold text-slate-900 mb-2">
-                    ChromaPalette <<spanspan class="text-indigo-600">AI</span>
-                </h1>
-                <<pp class="text-slate-500">Professional-grade color extraction using K-Means Clustering</p>
-            </header>
-
-            <<divdiv class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Left Column: Upload & Preview -->
-                <<divdiv class="space-y-6">
-                    <<divdiv 
-                        @dragover.prevent="isDragging = true" 
-                        @dragleave.prevent="isDragging = false"
-                        @drop.prevent="handleDrop"
-                        :class="['relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer overflow-hidden', 
-                                 isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white hover:border-indigo-400']"
-                        @click="$refs.fileInput.click()"
-                    >
-                        <<inputinput type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileUpload">
-                        
-                        <<divdiv v-if="!previewUrl" class="space-y-4 py-10">
-                            <<divdiv class="text-5xl">📸</div>
-                            <<pp class="text-slate-600">Drag & drop image or <<spanspan class="text-indigo-600 font-semibold">browse</span></p>
-                            <<pp class="text-xs text-slate-400">Supports JPG, PNG, WebP</p>
-                        </div>
-
-                        <<imgimg v-else :src="previewUrl" class="max-w-full rounded-lg shadow-lg mx-auto block" />
+    <<divdiv id="app" class="min-h-screen pb-20">
+        <!-- Navigation / Header -->
+        <<navnav class="sticky top-0 z-50 glass border-b border-white/5 py-4 px-6 mb-8">
+            <<divdiv class="max-w-7xl mx-auto flex justify-between items-center">
+                <<divdiv class="flex items-center space-x-2">
+                    <<divdiv class="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-rose-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <<spanspan class="text-white font-bold text-sm">CP</span>
                     </div>
-
-                    <!-- Controls -->
-                    <<divdiv class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <<divdiv class="flex justify-between mb-3">
-                            <<labellabel class="text-sm font-semibold text-slate-700">Number of Colors</label>
-                            <<spanspan class="text-sm font-bold text-indigo-600">{{ colorCount }}</span>
-                        </div>
-                        <<inputinput type="range" v-model="colorCount" min="2" max="12" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                        <<buttonbutton 
-                            @click="extractColors" 
-                            :disabled="!previewUrl || loading"
-                            class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-200 active:scale-95"
-                        >
-                            {{ loading ? 'Processing...' : 'Extract Palette' }}
-                        </button>
-                    </div>
+                    <<spanspan class="text-xl font-extrabold tracking-tight">ChromaPalette <<spanspan class="gradient-text">PRO</span></span>
                 </div>
+                <<divdiv class="text-xs font-medium text-slate-400 uppercase tracking-widest hidden sm:block">
+                    Color Intelligence Engine v2.0
+                </div>
+            </div>
+        </nav>
 
-                <!-- Right Column: Result Palette -->
-                <<divdiv class="space-y-6">
-                    <<divdiv class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[300px]">
-                        <<hh2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
-                            <<spanspan class="mr-2">✨</span> Generated Palette
+        <<mainmain class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <<divdiv class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left: Engine Input (Col 5) -->
+                <<divdiv class="lg:col-span-5 space-y-6">
+                    <<sectionsection class="glass rounded-3xl p-8 shadow-2xl">
+                        <<hh2 class="text-xl font-bold mb-6 flex items-center">
+                            <<spanspan class="mr-3 text-indigo-400">01.</span> Source Input
                         </h2>
+                        
+                        <!-- Dropzone -->
+                        <<divdiv 
+                            @dragover.prevent="isDragging = true" 
+                            @dragleave.prevent="isDragging = false"
+                            @drop.prevent="handleDrop"
+                            @click="$refs.fileInput.click()"
+                            :class="['relative group overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-500 cursor-pointer aspect-video flex flex-col items-center justify-center', 
+                                     isDragging ? 'border-indigo-500 bg-indigo-500/10 scale-[0.98]' : 'border-slate-700 hover:border-indigo-500/50 bg-slate-800/50']"
+                        >
+                            <<inputinput type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileUpload">
+                            
+                            <<divdiv v-if="!previewUrl" class="text-center space-y-3 transition-opacity group-hover:opacity-70">
+                                <<divdiv class="text-5xl animate-float">🖼️</div>
+                                <<pp class="text-slate-400 font-medium">Drop image or click to browse</p>
+                                <<pp class="text-xs text-slate-500">High-resolution textures supported</p>
+                            </div>
 
-                        <<divdiv v-if="palette.length === 0" class="h-48 flex flex-col items-center justify-center text-slate-400 italic">
-                            <<pp>No colors extracted yet.</p>
-                        </div>
-
-                        <<divdiv v-else class="grid grid-cols-1 gap-4">
-                            <<divdiv v-for="(color, index) in palette" :key="index" 
-                                class="color-card group flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:shadow-md transition-all bg-slate-50/50">
-                                <<divdiv class="flex items-center space-x-4">
-                                    <<divdiv :style="{ backgroundColor: color }" class="w-12 h-12 rounded-lg shadow-inner border border-white/20"></div>
-                                    <div>
-                                        <<pp class="font-mono font-bold text-slate-700 uppercase tracking-wider">{{ color }}</p>
-                                        <<pp class="text-[10px] text-slate-400 uppercase font-semibold tracking-widest">HEX CODE</p>
-                                    </div>
-                                </div>
-                                <<buttonbutton @click="copyToClipboard(color)" class="copy-btn opacity-0 bg-white shadow-sm hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-all border border-slate-200">
-                                    COPY
-                                </button>
+                            <<imgimg v-else :src="previewUrl" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                            
+                            <<divdiv v-if="previewUrl" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <<spanspan class="text-white font-semibold">Change Image</span>
                             </div>
                         </div>
-                    </div>
+
+                        <!-- Settings -->
+                        <<divdiv class="mt-8 space-y-6">
+                            <div>
+                                <<divdiv class="flex justify-between items-center mb-4">
+                                    <<labellabel class="text-sm font-semibold text-slate-300">Palette Complexity</label>
+                                    <<spanspan class="text-xs font-mono bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded">{{ colorCount }} Colors</span>
+                                </div>
+                                <<inputinput type="range" v-model="colorCount" min="2" max="16" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+
+                            <<buttonbutton 
+                                @click="extractColors" 
+                                :disabled="!previewUrl || loading"
+                                class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/25 flex items-center justify-center space-x-2"
+                            >
+                                <<spanspan v-if="loading" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span>{{ loading ? 'Analyzing Pixels...' : 'Run Intelligence Engine' }}</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right: Intelligence Output (Col 7) -->
+                <<divdiv class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Main Palette Section -->
+                    <<sectionsection class="glass rounded-3xl p-8 shadow-2xl">
+                        <<divdiv class="flex justify-between items-center mb-8">
+                            <<hh2 class="text-xl font-bold flex items-center">
+                                <<spanspan class="mr-3 text-indigo-400">02.</span> Primary Palette
+                            </h2>
+                            <<divdiv v-if="palette.length > 0" class="flex space-x-2">
+                                <<buttonbutton @click="exportCSS" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-700">CSS VARIABLES</button>
+                                <<buttonbutton @click="exportJSON" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-700">JSON</button>
+                            </div>
+                        </div>
+
+                        <<divdiv v-if="palette.length === 0" class="h-64 flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+                            <<pp class="italic text-sm">Waiting for engine input...</p>
+                        </div>
+
+                        <<divdiv v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <<divdiv v-for="(color, index) in palette" :key="index" 
+                                class="color-card group relative aspect-square rounded-2xl overflow-hidden cursor-pointer shadow-lg transition-all hover:scale-105"
+                                @click="copyToClipboard(color)"
+                            >
+                                <<divdiv :style="{ backgroundColor: color }" class="w-full h-full"></div>
+                                <<divdiv class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-2 text-center">
+                                    <<spanspan class="text-[10px] font-bold tracking-tighter opacity-70 uppercase">Click to Copy</span>
+                                    <<spanspan class="text-xs font-mono font-bold">{{ color.toUpperCase() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Harmony Section -->
+                    <<sectionsection v-if="palette.length > 0" class="glass rounded-3xl p-8 shadow-2xl">
+                        <<hh2 class="text-xl font-bold mb-6 flex items-center">
+                            <<spanspan class="mr-3 text-rose-400">03.</span> Harmony Suggestions
+                        </h2>
+                        <<divdiv class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Complementary -->
+                            <<divdiv class="space-y-3">
+                                <<pp class="text-xs font-bold text-slate-500 uppercase tracking-widest">Complementary</p>
+                                <<divdiv class="flex h-12 rounded-xl overflow-hidden border border-white/5">
+                                    <<divdiv v-for="c in harmonyPalettes.complementary" :key="c" :style="{ backgroundColor: c }" class="flex-1 h-full transition-all hover:flex-[2]"></div>
+                                </div>
+                            </div>
+                            <!-- Analogous -->
+                            <<divdiv class="space-y-3">
+                                <<pp class="text-xs font-bold text-slate-500 uppercase tracking-widest">Analogous</p>
+                                <<divdiv class="flex h-12 rounded-xl overflow-hidden border border-white/5">
+                                    <<divdiv v-for="c in harmonyPalettes.analogous" :key="c" :style="{ backgroundColor: c }" class="flex-1 h-full transition-all hover:flex-[2]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                 </div>
             </div>
         </div>
 
         <!-- Toast Notification -->
         <<transitiontransition name="fade">
-            <<divdiv v-if="toast.show" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl text-sm font-medium z-50">
-                {{ toast.message }}
+            <<divdiv v-if="toast.show" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-2xl text-sm font-bold z-50 flex items-center space-x-2">
+                <span>✨</span> <span>{{ toast.message }}</span>
             </div>
         </transition>
     </div>
 
     <<scriptscript>
-        const { createApp, ref, reactive } = Vue;
+        const { createApp, ref, reactive, computed } = Vue;
 
         createApp({
             setup() {
                 const previewUrl = ref(null);
                 const isDragging = ref(false);
                 const loading = ref(false);
-                const colorCount = ref(5);
+                const colorCount = ref(6);
                 const palette = ref([]);
                 const toast = reactive({ show: false, message: '' });
                 const fileInput = ref(null);
 
-                const handleFileUpload = (event) => {
-                    const file = event.target.files[0];
+                const handleFileUpload = (e) => {
+                    const file = e.target.files[0];
                     if (file) processFile(file);
                 };
 
-                const handleDrop = (event) => {
+                const handleDrop = (e) => {
                     isDragging.value = false;
-                    const file = event.dataTransfer.files[0];
+                    const file = e.dataTransfer.files[0];
                     if (file && file.type.startsWith('image/')) processFile(file);
                 };
 
@@ -141,36 +212,33 @@
 
                 const extractColors = async () => {
                     loading.value = true;
-                    await new Promise(resolve => setTimeout(resolve, 150));
+                    await new Promise(r => setTimeout(r, 400));
 
                     const img = new Image();
                     img.src = previewUrl.value;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                        
-                        // Downscale for computational efficiency (Senior optimization)
-                        const scale = Math.min(180 / img.width, 180 / img.height);
+                        const scale = Math.min(150 / img.width, 150 / img.height);
                         canvas.width = img.width * scale;
                         canvas.height = img.height * scale;
-                        
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
                         
+                        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
                         const pixels = [];
-                        for (let i = 0; i << imageData imageData.length; i += 4) {
-                            pixels.push([imageData[i], imageData[i+1], imageData[i+2]]);
+                        for (let i = 0; i << data data.length; i += 4) {
+                            pixels.push([data[i], data[i+1], data[i+2]]);
                         }
 
                         try {
-                            const clusters = mlKMeans.kmeans(pixels, parseInt(colorCount.value), {
-                                initialization: 'kmeans++'
+                            const clusters = mlKMeans.kmeans(pixels, parseInt(colorCount.value), { 
+                                initialization: 'kmeans++', 
+                                maxIterations: 20 
                             });
-                            
                             palette.value = clusters.centroids.map(rgb => rgbToHex(rgb[0], rgb[1], rgb[2]));
                         } catch (err) {
                             console.error(err);
-                            alert("Extraction failed. Please try another image.");
+                            alert("Extraction failed. Try another image.");
                         } finally {
                             loading.value = false;
                         }
@@ -182,19 +250,83 @@
                     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
                 };
 
+                const hexToHsl = (hex) => {
+                    let r = parseInt(hex.slice(1, 3), 16) / 255;
+                    let g = parseInt(hex.slice(3, 5), 16) / 255;
+                    let b = parseInt(hex.slice(5, 7), 16) / 255;
+                    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+                    let h, s, l = (max + min) / 2;
+                    if (max === min) h = s = 0;
+                    else {
+                        let d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r: h = (g - b) / d + (g << b b ? 6 : 0); break;
+                            case g: h = (b - r) / d + 2; break;
+                            case b: h = (r - g) / d + 4; break;
+                        }
+                        h /= 6;
+                    }
+                    return { h: h * 360, s: s * 100, l: l * 100 };
+                };
+
+                const hslToHex = (h, s, l) => {
+                    l /= 100;
+                    const a = s * Math.min(l, 1 - l) / 100;
+                    const f = n => {
+                        const k = (n + h / 30) % 12;
+                        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                        return Math.round(255 * color).toString(16).padStart(2, '0');
+                    };
+                    return `#${f(0)}${f(8)}${f(4)}`;
+                };
+
+                const harmonyPalettes = computed(() => {
+                    if (palette.value.length === 0) return { complementary: [], analogous: [] };
+                    const main = hexToHsl(palette.value[0]);
+                    return {
+                        complementary: [
+                            palette.value[0],
+                            hslToHex((main.h + 180) % 360, main.s, main.l),
+                            hslToHex((main.h + 180) % 360, main.s * 0.8, main.l * 1.2)
+                        ],
+                        analogous: [
+                            hslToHex((main.h + 330) % 360, main.s, main.l),
+                            palette.value[0],
+                            hslToHex((main.h + 30) % 360, main.s, main.l)
+                        ]
+                    };
+                });
+
                 const copyToClipboard = (text) => {
                     navigator.clipboard.writeText(text);
-                    toast.message = `Copied ${text.toUpperCase()} to clipboard!`;
+                    toast.message = `Copied ${text.toUpperCase()}!`;
                     toast.show = true;
-                    setTimeout(() => toast.show = false, 2500);
+                    setTimeout(() => toast.show = false, 2000);
+                };
+
+                const exportCSS = () => {
+                    const css = palette.value.map((c, i) => `--color-primary-${i+1}: ${c};`).join('\n');
+                    copyToClipboard(css);
+                    toast.message = "CSS Variables copied!";
+                    toast.show = true;
+                };
+
+                const exportJSON = () => {
+                    const json = JSON.stringify({ palette: palette.value }, null, 2);
+                    copyToClipboard(json);
+                    toast.message = "JSON Data copied!";
+                    toast.show = true;
                 };
 
                 return {
                     previewUrl, isDragging, loading, colorCount, palette, toast,
-                    fileInput, handleFileUpload, handleDrop, extractColors, copyToClipboard
+                    fileInput, handleFileUpload, handleDrop, extractColors, copyToClipboard,
+                    harmonyPalettes, exportCSS, exportJSON
                 };
             }
         }).mount('#app');
     </script>
 </body>
 </html>
+```
